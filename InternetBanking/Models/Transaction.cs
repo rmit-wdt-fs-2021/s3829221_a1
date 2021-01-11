@@ -14,6 +14,7 @@ namespace Models
         public char TransactionType { get; }
         public Account PayerAccount { get; }
         public Account PayeeAccount { get; }
+        public double Amount { get; }
         public string Comment { get; }
         public DateTime TransactionTimeUtc { get; }
     }

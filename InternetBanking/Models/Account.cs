@@ -13,6 +13,7 @@ namespace Models
         public int AccountNumber { get; }
         public char AccountType { get; }
         public Customer Customer { get; }
-        public double balance { get; set; }
+        public double Balance { get; }
+        public List<Transaction> Transactions { get; }
     }
 }

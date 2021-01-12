@@ -9,18 +9,28 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public Dictionary<int, Customer> Customers { get; }
+        public static Dictionary<int, Customer> Customers { get; }
 
 
         public CustomerManager(string connectionString)
         {
             _connectionString = connectionString;
 
-            // Using class library - connect to database, execute query, return table and disconnect
-            var customerTable = _connectionString.GetDataTable("select * from Customer");
+            // Create connection
+            var connection = _connectionString.CreateConnection();
+
+            // Create command
+            var command = connection.CreateCommand();
+            command.CommandText = "select * from Customer";
+
+            // Get table from database
+            var table = command.GetDataTable();
 
             // Construct Customer objects
+            foreach (var x in table.Select())
+            {
 
+            }
         }
 
 

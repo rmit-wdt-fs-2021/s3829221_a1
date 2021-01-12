@@ -5,7 +5,7 @@ using ClassLibrary;
 
 namespace Managers
 {
-    class LoginManager
+    public class LoginManager
     {
 
         private readonly string _connectionString;
@@ -16,18 +16,25 @@ namespace Managers
         {
             _connectionString = connectionString;
 
-            // Using class library - connect to database, execute query, return table and disconnect
-            var loginTable = _connectionString.GetDataTable("select * from Login");
+            // Create connection
+            var connection = _connectionString.CreateConnection();
 
-            var customerManager = new CustomerManager(_connectionString);
+            // Create command
+            var command = connection.CreateCommand();
+            command.CommandText = "select * from Login";
+
+            // Get table from database
+            var loginTable = command.GetDataTable();
 
             // Construct Login objects
             foreach (var x in loginTable.Select())
             {
-                var loginID = (string) x["LoginID"];
-                var customerID = (int) x["CustomerID"];
-                var customer = customerManager.Customers[customerID];
-                var login = new Login(loginID, customer, (string) x["PasswordHash"]);
+                var loginID = (string)x["LoginID"];
+                var customerID = (int)x["CustomerID"];
+                var customer = CustomerManager.Customers[customerID];
+
+                var login = new Login(loginID, customer, (string)x["PasswordHash"]);
+
                 Logins.Add(loginID, login);
             }
         }

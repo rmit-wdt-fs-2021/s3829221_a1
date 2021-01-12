@@ -15,5 +15,19 @@ namespace Models
         public Customer Customer { get; }
         public double Balance { get; }
         public List<Transaction> Transactions { get; }
+
+
+        public Account(int accountNumber, char accountType, Customer customer, double initialAmount, DateTime openTimeUtc)
+        {
+            AccountNumber = accountNumber;
+            AccountType = accountType;
+            Customer = customer;
+            Balance += initialAmount;
+            Transactions = new List<Transaction>();
+
+            // Record initial deposit
+            Transaction initialDeposit = new Transaction('D', this, initialAmount, "Initial deposit", openTimeUtc);
+            Transactions.Add(initialDeposit);
+        }
     }
 }

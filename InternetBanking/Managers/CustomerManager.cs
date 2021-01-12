@@ -24,12 +24,23 @@ namespace Managers
             command.CommandText = "select * from Customer";
 
             // Get table from database
-            var table = command.GetDataTable();
+            var customerTable = command.GetDataTable();
+
+            var accountManager = new AccountManager(_connectionString);
 
             // Construct Customer objects
-            foreach (var x in table.Select())
+            foreach (var x in customerTable.Select())
             {
+                var customerID = (int)x["CustomerID"];
+                var name = (string)x["Name"];
+                var address = (string)x["Address"];
+                var city = (string)x["City"];
+                var postCode = (string)x["PostCode"];
+                var accounts = accountManager.getAccounts(customerID);
 
+                var customer = new Customer(customerID, name, address, city, postCode, accounts);
+
+                Customers.Add(customerID, customer);
             }
         }
 
@@ -44,7 +55,7 @@ namespace Managers
             // Create command
             var command = connection.CreateCommand();
 
-            // Parameterised SQL
+            // Parameterised SQL - insert customer data into table
             command.CommandText = "insert into Customer (CustomerID, Name, Address, City, PostCode) values (@customerID, @name, @address, @city, @postCode)";
             command.Parameters.AddWithValue("CustomerID", customer.CustomerID);
             command.Parameters.AddWithValue("Name", customer.Name);

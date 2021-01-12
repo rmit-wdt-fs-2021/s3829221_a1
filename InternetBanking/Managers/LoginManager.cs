@@ -49,7 +49,7 @@ namespace Managers
             // Create command
             var command = connection.CreateCommand();
 
-            // Parameterised SQL
+            // Parameterised SQL - insert login data into table
             command.CommandText = "insert into Login (LoginID, CustomerID, PasswordHash) values (@loginID, @customerID, @passwordHash)";
             command.Parameters.AddWithValue("loginID", login.LoginID);
             command.Parameters.AddWithValue("customerID", login.Customer.CustomerID);

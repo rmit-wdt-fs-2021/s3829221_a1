@@ -49,5 +49,30 @@ namespace Managers
 
             return account.Transactions;
         }
+
+
+        public void InsertTransaction(Transaction transaction)
+        {
+
+            // Connect to database
+            using var connection = _connectionString.CreateConnection();
+            connection.Open();
+
+            // Create command
+            var command = connection.CreateCommand();
+
+            // Parameterised SQL - insert transaction data into table
+            command.CommandText = "insert into Transaction (TransactionID, TransactionType, AccountNumber, DestinationAccountNumber, Amount, Comment, TransactionTimeUtc)" +
+                "values (@transactionID, @transactionType, @accountNumber, @destinationAccountNumber, @amount, @comment, @transactionTimeUtc)";
+            command.Parameters.AddWithValue("transactionID", transaction.TransactionID);
+            command.Parameters.AddWithValue("transactionType", transaction.TransactionType);
+            command.Parameters.AddWithValue("accountNumber", transaction.Account.AccountNumber);
+            command.Parameters.AddWithValue("destinationAccountNumber", transaction.DestinationAccount.AccountNumber);
+            command.Parameters.AddWithValue("amount", transaction.Amount);
+            command.Parameters.AddWithValue("comment", transaction.Comment);
+            command.Parameters.AddWithValue("transactionTimeUtc", transaction.TransactionTimeUtc);
+
+            command.ExecuteNonQuery();
+        }
     }
 }

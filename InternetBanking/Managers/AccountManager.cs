@@ -32,9 +32,47 @@ namespace Managers
             command.Parameters.AddWithValue("customerID", customerID);
 
             // Get table from database
-            var transactionTable = command.GetDataTable();
+            var AccountTable = command.GetDataTable();
+
+            var customer = CustomerManager.Customers[customerID];
+
+            var transactionManager = new TransactionManager(_connectionString);
+
+            // Construct Account objects
+            foreach (var x in AccountTable.Select())
+            {
+                var accountNumber = (int)x["AccountNumber"];
+                var accountType = (char)x["AccountType"];
+                var balance = (double)x["Balance"];
+                var transactions = transactionManager.GetTransactions(accountNumber);
+
+                var account = new Account(accountNumber, accountType, customer, balance, transactions);
+
+                Accounts.Add(accountNumber, account);
+            }
+            
+            return Accounts;
+        }
 
 
+        public void InsertAccount(Account account)
+        {
+
+            // Connect to database
+            using var connection = _connectionString.CreateConnection();
+            connection.Open();
+
+            // Create command
+            var command = connection.CreateCommand();
+
+            // Parameterised SQL - insert account data into table
+            command.CommandText = "insert into Account (AccountNumber, AccountType, CustomerID, Balance) values (@accountNumber, @accountType, @customerID, @balance)";
+            command.Parameters.AddWithValue("accountNumber", account.AccountNumber);
+            command.Parameters.AddWithValue("accountType", account.AccountType);
+            command.Parameters.AddWithValue("customerID", account.Customer.CustomerID);
+            command.Parameters.AddWithValue("balance", account.Balance);
+
+            command.ExecuteNonQuery();
         }
     }
 }

@@ -39,7 +39,7 @@ namespace Managers
                 AccountNumber = (int)x["AccountNumber"],
                 DestinationAccountNumber = x["DestinationAccountNumber"] == DBNull.Value ? 0 : (int)x["DestinationAccountNumber"],
                 Amount = (decimal)x["Amount"],
-                Comment = (string)x["Comment"],
+                Comment = x["Comment"] == DBNull.Value ? null : (string)x["Comment"],
                 TransactionTimeUtc = (DateTime)x["TransactionTimeUtc"]
             }).ToList();
         }

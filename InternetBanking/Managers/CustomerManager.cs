@@ -11,7 +11,7 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public static Dictionary<int, Customer> Customers { get; set; }
+        public Dictionary<int, Customer> Customers { get; set; }
 
 
         public CustomerManager(string connectionString)
@@ -38,9 +38,9 @@ namespace Managers
                 {
                     CustomerID = (int)x["CustomerID"],
                     Name = (string)x["Name"],
-                    Address = (string)x["Address"],
-                    City = (string)x["City"],
-                    PostCode = (string)x["PostCode"],
+                    Address = x["Address"] == DBNull.Value ? null : (string)x["Address"],
+                    City = x["City"] == DBNull.Value ? null : (string)x["City"],
+                    PostCode = x["PostCode"] == DBNull.Value ? null : (string)x["PostCode"],
                     Accounts = accountManager.getAccounts((int)x["CustomerID"])
                 };
                 Customers.Add(customer.CustomerID, customer);

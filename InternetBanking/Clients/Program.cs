@@ -13,9 +13,11 @@ namespace Client
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             var connectionString = configuration["ConnectionString"];
 
+            // Read data from JSON file and save on database
             CustomersWebService.ReadAndSaveCustomer(connectionString);
             LoginsWebService.ReadAndSaveLogin(connectionString);
 
+            new Menu(connectionString).Run();
         }
     }
 }

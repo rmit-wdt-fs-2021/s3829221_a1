@@ -2,6 +2,8 @@
 using Models;
 using ClassLibrary;
 using System;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace Managers
 {
@@ -9,12 +11,13 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public static Dictionary<int, Customer> Customers { get; }
+        public static Dictionary<int, Customer> Customers { get; set; }
 
 
         public CustomerManager(string connectionString)
         {
             _connectionString = connectionString;
+            Customers = new Dictionary<int, Customer>();
 
             // Create connection
             var connection = _connectionString.CreateConnection();
@@ -23,7 +26,7 @@ namespace Managers
             var command = connection.CreateCommand();
             command.CommandText = "select * from Customer";
 
-            // Get table from database
+            //Get table from database
             var customerTable = command.GetDataTable();
 
             var accountManager = new AccountManager(_connectionString);
@@ -31,16 +34,16 @@ namespace Managers
             // Construct Customer objects
             foreach (var x in customerTable.Select())
             {
-                var customerID = (int)x["CustomerID"];
-                var name = (string)x["Name"];
-                var address = (string)x["Address"];
-                var city = (string)x["City"];
-                var postCode = (string)x["PostCode"];
-                var accounts = accountManager.getAccounts(customerID);
-
-                var customer = new Customer(customerID, name, address, city, postCode, accounts);
-
-                Customers.Add(customerID, customer);
+                var customer = new Customer
+                {
+                    CustomerID = (int)x["CustomerID"],
+                    Name = (string)x["Name"],
+                    Address = (string)x["Address"],
+                    City = (string)x["City"],
+                    PostCode = (string)x["PostCode"],
+                    Accounts = accountManager.getAccounts((int)x["CustomerID"])
+                };
+                Customers.Add(customer.CustomerID, customer);
             }
         }
 

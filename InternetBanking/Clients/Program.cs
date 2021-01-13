@@ -10,7 +10,7 @@ namespace Client
         {
 
             // Import connection string from JSON file
-            var configuration = new ConfigurationBuilder().AddJsonFile("appsettings").Build();
+            var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             var connectionString = configuration["ConnectionString"];
 
             CustomersWebService.ReadAndSaveCustomer(connectionString);

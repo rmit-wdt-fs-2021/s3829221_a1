@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ClassLibrary;
 using Models;
 
@@ -20,34 +21,27 @@ namespace Managers
         public List<Transaction> GetTransactions(int accountNumber)
         {
             // Create connection
-            using var connection = _connectionString.CreateConnection();
+            var connection = _connectionString.CreateConnection();
 
             // Create command
             var command = connection.CreateCommand();
-            command.CommandText = "select * from Transaction where AccountNumber = @accountNumber";
+            command.CommandText = "select * from [Transaction] where AccountNumber = @accountNumber";
             command.Parameters.AddWithValue("accountNumber", accountNumber);
 
             // Get table from database
             var transactionTable = command.GetDataTable();
 
-            var account = AccountManager.Accounts[accountNumber];
-
             // Construct transaction objects
-            foreach (var x in transactionTable.Select())
+            return transactionTable.Select().Select(x => new Transaction
             {
-                var transactionID = (int)x["TransactionID"];
-                var transactionType = (char)x["TransactionType"];
-                var destinationAccount = AccountManager.Accounts[(int)x["DestinationAccountNumber"]];
-                var amount = (double)x["Amount"];
-                var comment = (string)x["Comment"];
-                var transactionTimeUtc = (DateTime)x["TransactionTimeUtc"];
-
-                var transaction = new Transaction(transactionID, transactionType, account, destinationAccount, amount, comment, transactionTimeUtc);
-
-                account.Transactions.Add(transaction);
-            }
-
-            return account.Transactions;
+                TransactionID = (int)x["TransactionID"],
+                TransactionType = char.Parse((string)x["TransactionType"]),
+                AccountNumber = (int)x["AccountNumber"],
+                DestinationAccountNumber = x["DestinationAccountNumber"] == DBNull.Value ? 0 : (int)x["DestinationAccountNumber"],
+                Amount = (decimal)x["Amount"],
+                Comment = (string)x["Comment"],
+                TransactionTimeUtc = (DateTime)x["TransactionTimeUtc"]
+            }).ToList();
         }
 
 
@@ -62,13 +56,12 @@ namespace Managers
             var command = connection.CreateCommand();
 
             // Parameterised SQL - insert transaction data into table
-            command.CommandText = "insert into Transaction (TransactionID, TransactionType, AccountNumber, DestinationAccountNumber, Amount, Comment, TransactionTimeUtc)" +
-                "values (@transactionID, @transactionType, @accountNumber, @destinationAccountNumber, @amount, @comment, @transactionTimeUtc)";
-            command.Parameters.AddWithValue("transactionID", transaction.TransactionID);
-            command.Parameters.AddWithValue("transactionType", transaction.TransactionType);
-            command.Parameters.AddWithValue("accountNumber", transaction.Account.AccountNumber);
-            command.Parameters.AddWithValue("destinationAccountNumber", (object)transaction.DestinationAccount.AccountNumber ?? DBNull.Value);
-            command.Parameters.AddWithValue("amount", transaction.Amount);
+            command.CommandText = "insert into [Transaction] (TransactionType, AccountNumber, DestinationAccountNumber, Amount, Comment, TransactionTimeUtc)" +
+                "values (@transactionType, @accountNumber, @destinationAccountNumber, @amount, @comment, @transactionTimeUtc)";
+            command.Parameters.AddWithValue("transactionType", transaction.TransactionType != '\0' ? transaction.TransactionType : 'D');
+            command.Parameters.AddWithValue("accountNumber", transaction.AccountNumber);
+            command.Parameters.AddWithValue("destinationAccountNumber", transaction.DestinationAccountNumber != 0 ? transaction.DestinationAccountNumber : DBNull.Value);
+            command.Parameters.AddWithValue("amount", transaction.Amount != '\0' ? Math.Round(transaction.Amount, 2) : AccountManager.Accounts[transaction.AccountNumber].Balance);
             command.Parameters.AddWithValue("comment", (object)transaction.Comment ?? DBNull.Value);
             command.Parameters.AddWithValue("transactionTimeUtc", transaction.TransactionTimeUtc);
 

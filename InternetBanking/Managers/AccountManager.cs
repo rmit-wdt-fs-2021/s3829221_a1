@@ -8,19 +8,20 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public static Dictionary<int, Account> Accounts { get; }
+        public static Dictionary<int, Account> Accounts { get; set; }
 
 
         public AccountManager(string connectionString)
         {
             _connectionString = connectionString;
+            Accounts = new Dictionary<int, Account>();
         }
 
 
-        public Dictionary<int, Account> getAccounts(int customerID)
+        public List<Account> getAccounts(int customerID)
         {
             // Create connection
-            using var connection = _connectionString.CreateConnection();
+            var connection = _connectionString.CreateConnection();
 
             // Create command
             var command = connection.CreateCommand();
@@ -28,26 +29,28 @@ namespace Managers
             command.Parameters.AddWithValue("customerID", customerID);
 
             // Get table from database
-            var AccountTable = command.GetDataTable();
+            var accountTable = command.GetDataTable();
 
-            var customer = CustomerManager.Customers[customerID];
+            var accountList = new List<Account>();
 
             var transactionManager = new TransactionManager(_connectionString);
 
             // Construct Account objects
-            foreach (var x in AccountTable.Select())
+            foreach (var x in accountTable.Select())
             {
-                var accountNumber = (int)x["AccountNumber"];
-                var accountType = (char)x["AccountType"];
-                var balance = (double)x["Balance"];
-                var transactions = transactionManager.GetTransactions(accountNumber);
-
-                var account = new Account(accountNumber, accountType, customer, balance, transactions);
-
-                Accounts.Add(accountNumber, account);
+                var account = new Account
+                {
+                    AccountNumber = (int)x["AccountNumber"],
+                    AccountType = char.Parse((string)x["AccountType"]),
+                    CustomerID = (int)x["CustomerID"],
+                    Balance = (decimal)x["Balance"],
+                    Transactions = transactionManager.GetTransactions((int)x["AccountNumber"])
+                };
+                Accounts.Add(account.AccountNumber, account);
+                accountList.Add(account);
             }
-            
-            return Accounts;
+
+            return accountList;
         }
 
 
@@ -65,7 +68,7 @@ namespace Managers
             command.CommandText = "insert into Account (AccountNumber, AccountType, CustomerID, Balance) values (@accountNumber, @accountType, @customerID, @balance)";
             command.Parameters.AddWithValue("accountNumber", account.AccountNumber);
             command.Parameters.AddWithValue("accountType", account.AccountType);
-            command.Parameters.AddWithValue("customerID", account.Customer.CustomerID);
+            command.Parameters.AddWithValue("customerID", account.CustomerID);
             command.Parameters.AddWithValue("balance", account.Balance);
 
             command.ExecuteNonQuery();

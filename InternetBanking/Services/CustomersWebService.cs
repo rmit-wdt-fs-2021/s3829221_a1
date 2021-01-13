@@ -25,7 +25,7 @@ namespace Services
             // Deserialise JSON file into objects
             var customers = JsonConvert.DeserializeObject<List<Customer>>(json, new JsonSerializerSettings
             {
-                DateFormatString = "dd/mm/yyyy"
+                DateFormatString = "dd/MM/yyyy hh:mm:ss tt"
             });
 
             // Insert data stored in JSON into database
@@ -34,18 +34,20 @@ namespace Services
             foreach (var customer in customers)
             {
                 customerManager.InsertCustomer(customer);
+                CustomerManager.Customers.Add(customer.CustomerID, customer);
 
                 foreach (var account in customer.Accounts)
                 {
-                    // Set account's customer
-                    account.Value.Customer.CustomerID = customer.CustomerID;
-                    accountManager.InsertAccount(account.Value);
+                    // Set account's customer ID
+                    account.CustomerID = customer.CustomerID;
+                    accountManager.InsertAccount(account);
+                    AccountManager.Accounts.Add(account.AccountNumber, account);
 
-                    foreach (var transaction in account.Value.Transactions)
+                    foreach (var transaction in account.Transactions)
                     {
 
                         // Set transaction's account number
-                        transaction.Account.AccountNumber = account.Value.AccountNumber;
+                        transaction.AccountNumber = account.AccountNumber;
                         transactionManager.InsertTransaction(transaction);
                     }
                 }

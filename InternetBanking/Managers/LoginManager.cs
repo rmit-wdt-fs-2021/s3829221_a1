@@ -8,12 +8,13 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public Dictionary<string, Login> Logins { get; }
+        public Dictionary<string, Login> Logins { get; set; }
 
 
         public LoginManager(string connectionString)
         {
             _connectionString = connectionString;
+            Logins = new Dictionary<string, Login>();
 
             // Create connection
             var connection = _connectionString.CreateConnection();
@@ -28,13 +29,14 @@ namespace Managers
             // Construct Login objects
             foreach (var x in loginTable.Select())
             {
-                var loginID = (string)x["LoginID"];
-                var customerID = (int)x["CustomerID"];
-                var customer = CustomerManager.Customers[customerID];
+                var login = new Login
+                {
+                    LoginID = (string)x["LoginID"],
+                    CustomerID = (int)x["CustomerID"],
+                    PasswordHash = (string)x["PasswordHash"]
+                };
 
-                var login = new Login(loginID, customer, (string)x["PasswordHash"]);
-
-                Logins.Add(loginID, login);
+                Logins.Add(login.LoginID, login);
             }
         }
 
@@ -51,7 +53,7 @@ namespace Managers
             // Parameterised SQL - insert login data into table
             command.CommandText = "insert into Login (LoginID, CustomerID, PasswordHash) values (@loginID, @customerID, @passwordHash)";
             command.Parameters.AddWithValue("loginID", login.LoginID);
-            command.Parameters.AddWithValue("customerID", login.Customer.CustomerID);
+            command.Parameters.AddWithValue("customerID", login.CustomerID);
             command.Parameters.AddWithValue("passwordHash", login.PasswordHash);
 
             command.ExecuteNonQuery();

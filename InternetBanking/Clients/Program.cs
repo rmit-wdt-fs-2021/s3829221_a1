@@ -1,4 +1,5 @@
 ﻿using System;
+using Services;
 using Microsoft.Extensions.Configuration;
 
 namespace Client
@@ -11,6 +12,9 @@ namespace Client
             // Import connection string from JSON file
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings").Build();
             var connectionString = configuration["ConnectionString"];
+
+            CustomersWebService.ReadAndSaveCustomer(connectionString);
+            LoginsWebService.ReadAndSaveLogin(connectionString);
 
         }
     }

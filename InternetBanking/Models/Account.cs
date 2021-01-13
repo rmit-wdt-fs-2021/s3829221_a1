@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Models
 {
@@ -10,7 +6,7 @@ namespace Models
     {
 
         // Properties
-        public int AccountNumber { get; }
+        public int AccountNumber { get; set; }
         public char AccountType { get; }
         public Customer Customer { get; }
         public double Balance { get; }

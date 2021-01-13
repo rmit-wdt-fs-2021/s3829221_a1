@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using Models;
 using ClassLibrary;
+using System;
 
 namespace Managers
 {
@@ -59,9 +59,9 @@ namespace Managers
             command.CommandText = "insert into Customer (CustomerID, Name, Address, City, PostCode) values (@customerID, @name, @address, @city, @postCode)";
             command.Parameters.AddWithValue("CustomerID", customer.CustomerID);
             command.Parameters.AddWithValue("Name", customer.Name);
-            command.Parameters.AddWithValue("Address", customer.Address);
-            command.Parameters.AddWithValue("City", customer.City);
-            command.Parameters.AddWithValue("PostCode", customer.PostCode);
+            command.Parameters.AddWithValue("Address", (object)customer.Address ?? DBNull.Value);
+            command.Parameters.AddWithValue("City", (object)customer.City ?? DBNull.Value);
+            command.Parameters.AddWithValue("PostCode", (object)customer.PostCode ?? DBNull.Value);
 
             command.ExecuteNonQuery();
         }

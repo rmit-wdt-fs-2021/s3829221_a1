@@ -67,9 +67,9 @@ namespace Managers
             command.Parameters.AddWithValue("transactionID", transaction.TransactionID);
             command.Parameters.AddWithValue("transactionType", transaction.TransactionType);
             command.Parameters.AddWithValue("accountNumber", transaction.Account.AccountNumber);
-            command.Parameters.AddWithValue("destinationAccountNumber", transaction.DestinationAccount.AccountNumber);
+            command.Parameters.AddWithValue("destinationAccountNumber", (object)transaction.DestinationAccount.AccountNumber ?? DBNull.Value);
             command.Parameters.AddWithValue("amount", transaction.Amount);
-            command.Parameters.AddWithValue("comment", transaction.Comment);
+            command.Parameters.AddWithValue("comment", (object)transaction.Comment ?? DBNull.Value);
             command.Parameters.AddWithValue("transactionTimeUtc", transaction.TransactionTimeUtc);
 
             command.ExecuteNonQuery();

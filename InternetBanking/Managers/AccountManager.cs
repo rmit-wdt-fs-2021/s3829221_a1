@@ -73,5 +73,19 @@ namespace Managers
 
             command.ExecuteNonQuery();
         }
+
+
+        public void UpdateAccount(int accountNumber, decimal amount)
+        {
+            using var connection = _connectionString.CreateConnection();
+            connection.Open();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "update Account set Balance += @amount where AccountNumber = @accountNumber";
+            command.Parameters.AddWithValue("amount", amount);
+            command.Parameters.AddWithValue("accountNumber", accountNumber);
+
+            command.ExecuteNonQuery();
+        }
     }
 }

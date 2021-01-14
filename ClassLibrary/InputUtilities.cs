@@ -50,5 +50,24 @@ namespace ClassLibrary
                     return option;
             }
         }
+
+
+        public static decimal EnterPositiveNum()
+        {
+            while (true)
+            {
+                var input = Console.ReadLine();
+                Console.WriteLine();
+
+                if (!decimal.TryParse(input, out decimal num) || num < 0)
+                {
+                    Console.WriteLine("Invalid input, please enter again.");
+                    Console.WriteLine();
+                    continue;
+                }
+                else
+                    return num;
+            }
+        }
     }
 }

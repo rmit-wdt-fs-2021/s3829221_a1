@@ -2,8 +2,6 @@
 using SimpleHashing;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Models;
 using Managers;
 using ClassLibrary;
@@ -14,6 +12,8 @@ namespace Client
     {
 
         private readonly CustomerManager _customerManager;
+        private readonly AccountManager _accountManager;
+        private readonly TransactionManager _transactionManager;
         private readonly LoginManager _loginManager;
         private Customer _customer;
         private Account _account;
@@ -22,6 +22,8 @@ namespace Client
         public Menu(string connectionString)
         {
             _customerManager = new CustomerManager(connectionString);
+            _accountManager = new AccountManager(connectionString);
+            _transactionManager = new TransactionManager(connectionString);
             _loginManager = new LoginManager(connectionString);
         }
 
@@ -185,11 +187,21 @@ Enter an option: ");
         {
             while (true)
             {
+                Console.WriteLine(
+@"Account Infomation
+=============================
+Account Number: {0}
+Account Type:   {1}
+Balance:        {2:C}",
+_account.AccountNumber, _account.AccountType == 'S' ? "Saving" : "Checking", _account.Balance);
+
+                Console.WriteLine();
+
                 Console.Write(
-@"Select a service
+@"         Services
 ==========================
 1. Deposit
-2. Withdraw
+2. Withdrawal
 3. Transfer
 4. My statement
 5. Return to customer page
@@ -202,19 +214,19 @@ Enter an option: ");
                 {
                     case 1:
                         Console.Clear();
-
+                        Deposit();
                         break;
                     case 2:
                         Console.Clear();
-
+                        Withdraw();
                         break;
                     case 3:
                         Console.Clear();
-
+                        Transfer();
                         break;
                     case 4:
                         Console.Clear();
-
+                        DisplayStatement();
                         break;
                     case 5:
                         Console.Clear();
@@ -225,6 +237,128 @@ Enter an option: ");
                         throw new InvalidOperationException();
                 }
             }
+        }
+
+
+        public void Deposit()
+        {
+            Console.Write("Specify the amount of deposit: ");
+            var amount = InputUtilities.EnterPositiveNum();
+
+            // Create transaction object
+            var transaction = _account.Deposit(_account.AccountNumber, 0, amount, null);
+
+            // Insert transaction into database
+            _transactionManager.InsertTransaction(transaction);
+
+            // Update Account table
+            _accountManager.UpdateAccount(_account.AccountNumber, amount);
+
+            Console.Clear();
+            Console.WriteLine("A deposit of {0:C} has been made to your account {1}", amount, _account.AccountNumber);
+            Console.WriteLine();
+        }
+
+
+        public void Withdraw()
+        {
+            // Count the number of transactions where service charge applies
+            var result = from transaction in _account.Transactions
+                         where transaction.TransactionType == 'W' || transaction.TransactionType == 'T' && transaction.Amount < 0
+                         select transaction;
+            var count = result.Count();
+
+            var serviceFee = count < 4 ? 0 : (decimal)0.1;
+
+            while (true)
+            {
+                Console.Write("Specify the amount of withdrawal: ");
+                var amount = InputUtilities.EnterPositiveNum();
+
+                try
+                {
+                    // Withdraw from account
+                    var withdraw = _account.Withdraw(_account.AccountNumber, 0, amount, null);
+
+                    // Insert withdrawal into database
+                    _transactionManager.InsertTransaction(withdraw);
+
+                    Console.Clear();
+                    Console.WriteLine("A withdrawal of {0:C} has been made from your account {1}", amount, _account.AccountNumber);
+
+                    // Charge service fee if free transactions run out
+                    if (serviceFee != 0)
+                    {
+                        var serviceCharge = _account.ServiceCharge(_account.AccountNumber, 0, serviceFee, null);
+                        _transactionManager.InsertTransaction(serviceCharge);
+
+                        Console.WriteLine("A service charge of {0:C} has been applied.", serviceFee);
+                    }
+
+                    _accountManager.UpdateAccount(_account.AccountNumber, -(amount + serviceFee));
+                    Console.WriteLine();
+                    return;
+                }
+                catch (MinBalanceBreachException)
+                {
+                    continue;
+                }
+            }
+        }
+
+
+        public void Transfer()
+        {
+            // Count the number of transactions where service charge applies
+            var result = from transaction in _account.Transactions
+                         where transaction.TransactionType == 'W' || transaction.TransactionType == 'T' && transaction.Amount < 0
+                         select transaction;
+            var count = result.Count();
+
+            var serviceFee = count < 4 ? 0 : (decimal)0.1;
+
+            while (true)
+            {
+                Console.Write("Specify the destination account: ");
+                var destinationAccount = Console.ReadLine();
+                Console.WriteLine();
+
+                if (!int.TryParse(destinationAccount, out int destAcc))
+                {
+                    Console.Clear();
+                    Console.WriteLine("Account number only consists digits, please enter again.");
+                    Console.WriteLine();
+                    continue;
+                }
+
+                Console.Write("Specify the amount of transfer: ");
+                var amount = InputUtilities.EnterPositiveNum();
+                Console.WriteLine();
+
+                Console.Write("Leave a message (press ENTER to skip): ");
+                var comment = Console.ReadLine();
+                Console.WriteLine();
+
+                try
+                {
+                    // Transfer out from account
+                    var transferOut = _account.TransferOut(_account.AccountNumber, int.Parse(destinationAccount), amount, comment);
+                }
+                catch (ObjectNotFoundException)
+                {
+
+                }
+                catch (MinBalanceBreachException)
+                {
+
+                }
+            }
+        }
+
+
+        public void DisplayStatement()
+        {
+
         }
     }
 }

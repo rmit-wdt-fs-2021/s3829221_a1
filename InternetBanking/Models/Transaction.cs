@@ -24,7 +24,7 @@ namespace Models
 
         public override string ToString()
         {
-            return String.Format("{0, 12} {1, 12} {2, 12} {3, 12} {4, 12:C} {5, 12} {6, 12} {7, 12}",
+            return String.Format("{0, 12} {1, 12} {2, 12} {3, 12} {4, 12:C} {5, 12} {6, 12}",
                 TransactionID,
                 TransactionType,
                 AccountNumber,

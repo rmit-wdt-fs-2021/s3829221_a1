@@ -191,11 +191,12 @@ Enter an option: ");
 1. Deposit
 2. Withdraw
 3. Transfer
-4. Return to customer page
+4. My statement
+5. Return to customer page
 
 Enter an option: ");
 
-                var option = InputUtilities.EnterOption(1, 4);
+                var option = InputUtilities.EnterOption(1, 5);
 
                 switch (option)
                 {
@@ -212,6 +213,10 @@ Enter an option: ");
 
                         break;
                     case 4:
+                        Console.Clear();
+
+                        break;
+                    case 5:
                         Console.Clear();
                         // Remove current operating account
                         _account = null;

@@ -11,14 +11,15 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public Dictionary<int, Customer> Customers { get; set; }
 
 
         public CustomerManager(string connectionString)
         {
             _connectionString = connectionString;
-            Customers = new Dictionary<int, Customer>();
+        }
 
+        public void Instantiate()
+        { 
             // Create connection
             var connection = _connectionString.CreateConnection();
 
@@ -43,7 +44,7 @@ namespace Managers
                     PostCode = x["PostCode"] == DBNull.Value ? null : (string)x["PostCode"],
                     Accounts = accountManager.getAccounts((int)x["CustomerID"])
                 };
-                Customers.Add(customer.CustomerID, customer);
+                Container.Customers.Add(customer.CustomerID, customer);
             }
         }
 

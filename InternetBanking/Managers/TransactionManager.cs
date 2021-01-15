@@ -61,8 +61,8 @@ namespace Managers
             command.Parameters.AddWithValue("transactionType", transaction.TransactionType != '\0' ? transaction.TransactionType : 'D');
             command.Parameters.AddWithValue("accountNumber", transaction.AccountNumber);
             command.Parameters.AddWithValue("destinationAccountNumber", transaction.DestinationAccountNumber != 0 ? transaction.DestinationAccountNumber : DBNull.Value);
-            command.Parameters.AddWithValue("amount", transaction.Amount != '\0' ? Math.Round(transaction.Amount, 2) : AccountManager.Accounts[transaction.AccountNumber].Balance);
-            command.Parameters.AddWithValue("comment", (object)transaction.Comment ?? DBNull.Value);
+            command.Parameters.AddWithValue("amount", transaction.Amount != '\0' ? Math.Round(transaction.Amount, 2) : Container.Accounts[transaction.AccountNumber].Balance);
+            command.Parameters.AddWithValue("comment", transaction.Comment == null || transaction.Comment == "" ? DBNull.Value : transaction.Comment);
             command.Parameters.AddWithValue("transactionTimeUtc", transaction.TransactionTimeUtc);
 
             command.ExecuteNonQuery();

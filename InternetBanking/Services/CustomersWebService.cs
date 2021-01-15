@@ -15,7 +15,8 @@ namespace Services
 
             // Check if any customer exists in the table
             var customerManager = new CustomerManager(connectionString);
-            if (customerManager.Customers.Any())
+            customerManager.Instantiate();
+            if (Container.Customers.Any())
                 return;
 
             // Contact web service and read JSON file
@@ -34,14 +35,14 @@ namespace Services
             foreach (var customer in customers)
             {
                 customerManager.InsertCustomer(customer);
-                customerManager.Customers.Add(customer.CustomerID, customer);
+                Container.Customers.Add(customer.CustomerID, customer);
 
                 foreach (var account in customer.Accounts)
                 {
                     // Set account's customer ID
                     account.CustomerID = customer.CustomerID;
                     accountManager.InsertAccount(account);
-                    AccountManager.Accounts.Add(account.AccountNumber, account);
+                    Container.Accounts.Add(account.AccountNumber, account);
 
                     foreach (var transaction in account.Transactions)
                     {

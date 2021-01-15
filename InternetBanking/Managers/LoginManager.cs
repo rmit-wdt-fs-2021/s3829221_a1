@@ -8,14 +8,15 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public Dictionary<string, Login> Logins { get; set; }
 
 
         public LoginManager(string connectionString)
         {
             _connectionString = connectionString;
-            Logins = new Dictionary<string, Login>();
+        }
 
+        public void Instantiate()
+        { 
             // Create connection
             var connection = _connectionString.CreateConnection();
 
@@ -36,7 +37,7 @@ namespace Managers
                     PasswordHash = (string)x["PasswordHash"]
                 };
 
-                Logins.Add(login.LoginID, login);
+                Container.Logins.Add(login.LoginID, login);
             }
         }
 

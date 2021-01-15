@@ -2,6 +2,8 @@
 using Builders;
 using ClassLibrary;
 using Managers;
+using System.Linq;
+using System;
 
 namespace Models
 {
@@ -29,101 +31,180 @@ namespace Models
             var transaction = director.GetTransaction();
             Transactions.Add(transaction);
 
+            Console.Clear();
+            Console.WriteLine("A deposit of {0:C} has been made to your account {1}", amount, accountNumber);
+            Console.WriteLine();
+
             return transaction;
         }
 
 
-        public Transaction Withdraw(int accountNumber, int destinationAccountNumber, decimal amount, string comment)
+        public List<Transaction> Withdraw(int accountNumber, int destinationAccountNumber, decimal amount, string comment)
         {
-            if (AccountType == 'S' && Balance - amount < 0)
+            var transactionList = new List<Transaction>();
+
+            // Count the number of transactions where service charge may apply (withdrwal & transfer-out)
+            var result = from transaction in Transactions
+                         where transaction.TransactionType == 'W' || transaction.TransactionType == 'T' && transaction.DestinationAccountNumber != 0
+                         select transaction;
+            var count = result.Count();
+
+            var serviceFee = count < 4 ? 0 : (decimal)0.1;
+
+            if (AccountType == 'S' && Balance - amount - serviceFee < 0)
+            {
+                Console.WriteLine("Withdrawal request: ");
+                Console.WriteLine("Withdrawl amount: {0:C}", amount);
+                Console.WriteLine("Service charge:   {0:C}", serviceFee);
+                Console.WriteLine();
                 throw new MinBalanceBreachException(0);
-
-            else if (AccountType == 'C' && Balance - amount < 200)
+            }
+                
+            else if (AccountType == 'C' && Balance - amount - serviceFee < 200)
+            {
+                Console.WriteLine("Withdrawal request: ");
+                Console.WriteLine("Withdrawl amount: {0:C}", amount);
+                Console.WriteLine("Service charge:   {0:C}", serviceFee);
+                Console.WriteLine();
                 throw new MinBalanceBreachException(200);
-
+            }
+                
             else
             {
                 Balance -= amount;
 
                 var withdrawalBuilder = new WithdrawalBuilder();
-                var director = new Director();
+                var withdrawalDirector = new Director();
 
-                director.SetTransactionBuilder(withdrawalBuilder);
-                director.ConstructTransaction(accountNumber, destinationAccountNumber, amount, comment);
+                withdrawalDirector.SetTransactionBuilder(withdrawalBuilder);
+                withdrawalDirector.ConstructTransaction(accountNumber, destinationAccountNumber, amount, comment);
 
-                var transaction = director.GetTransaction();
-                Transactions.Add(transaction);
+                var withdrawal = withdrawalDirector.GetTransaction();
+                Transactions.Add(withdrawal);
+                transactionList.Add(withdrawal);
 
-                return transaction;
+                Console.Clear();
+                Console.WriteLine("A withdrawal of {0:C} has been made from your account {1}.", amount, accountNumber);
+                Console.WriteLine();
+
+                // If service charge applies
+                if (serviceFee != 0)
+                {
+                    Balance -= serviceFee;
+
+                    var serviceChargeBuilder = new ServiceChargeBuilder();
+                    var serviceChargeDirector = new Director();
+
+                    serviceChargeDirector.SetTransactionBuilder(serviceChargeBuilder);
+                    serviceChargeDirector.ConstructTransaction(accountNumber, 0, serviceFee, null);
+
+                    var serviceCharge = serviceChargeDirector.GetTransaction();
+                    Transactions.Add(serviceCharge);
+                    transactionList.Add(serviceCharge);
+
+                    Console.WriteLine("A service charge of {0} has been applied.", serviceFee);
+                    Console.WriteLine();
+                }
+
+                return transactionList;
             }
         }
 
 
-        public Transaction TransferOut(int accountNumber, int destinationAccountNumber, decimal amount, string comment)
+        public List<Transaction> Transfer(int accountNumber, int destinationAccountNumber, decimal amount, string comment)
         {
-            if (!AccountManager.Accounts.ContainsKey(destinationAccountNumber) && destinationAccountNumber != 0)
+            var transactionList = new List<Transaction>();
+
+            // Count the number of transactions where service charge may apply (withdrwal & transfer-out)
+            var result = from transaction in Transactions
+                         where transaction.TransactionType == 'W' || transaction.TransactionType == 'T' && transaction.DestinationAccountNumber != 0
+                         select transaction;
+            var count = result.Count();
+
+            var serviceFee = count < 4 ? 0 : (decimal)0.2;
+
+            if (!Container.Accounts.ContainsKey(destinationAccountNumber))
             {
+                Console.Clear();
+                Console.Write("Transfer rejected: ");
                 throw new ObjectNotFoundException("account");
             }
 
             else
             {
-                if (AccountType == 'S' && Balance - amount < 0)
+                if (AccountType == 'S' && Balance - amount - serviceFee < 0)
+                {
+                    Console.WriteLine("Transfer request: ");
+                    Console.WriteLine("Transfer amount: {0:C}", amount);
+                    Console.WriteLine("Service charge:  {0:C}", serviceFee);
+                    Console.WriteLine();
                     throw new MinBalanceBreachException(0);
+                }
 
-                else if (AccountType == 'C' && Balance - amount < 200)
+                else if (AccountType == 'C' && Balance - amount - serviceFee < 200)
+                {
+                    Console.WriteLine("Transfer request: ");
+                    Console.WriteLine("Transfer amount: {0:C}", amount);
+                    Console.WriteLine("Service charge:  {0:C}", serviceFee);
+                    Console.WriteLine();
                     throw new MinBalanceBreachException(200);
+                }
 
                 else
                 {
+                    // Debit this account
                     Balance -= amount;
 
-                    var transferBuilder = new TransferBuilder();
+                    var transferOutBuilder = new TransferBuilder();
                     var director = new Director();
 
-                    director.SetTransactionBuilder(transferBuilder);
+                    director.SetTransactionBuilder(transferOutBuilder);
                     director.ConstructTransaction(accountNumber, destinationAccountNumber, amount, comment);
 
-                    var transaction = director.GetTransaction();
-                    Transactions.Add(transaction);
+                    var transferOut = director.GetTransaction();
+                    Transactions.Add(transferOut);
+                    transactionList.Add(transferOut);
 
-                    return transaction;
+                    // Credit destination account
+                    var destinationAccount = Container.Accounts[destinationAccountNumber];
+                    destinationAccount.Balance += amount;
+
+                    var transferInBuilder = new TransferBuilder();
+                    var director2 = new Director();
+
+                    director2.SetTransactionBuilder(transferInBuilder);
+                    director2.ConstructTransaction(destinationAccountNumber, 0, amount, comment);
+
+                    var transferIn = director2.GetTransaction();
+                    Transactions.Add(transferIn);
+                    transactionList.Add(transferIn);
+
+                    Console.Clear();
+                    Console.WriteLine("A transfer of {0:C} has been made from account {1} to account {2}.", amount, accountNumber, destinationAccountNumber);
+                    Console.WriteLine();
+
+                    // If service charge applies
+                    if (serviceFee != 0)
+                    {
+                        Balance -= serviceFee;
+
+                        var serviceChargeBuilder = new ServiceChargeBuilder();
+                        var serviceChargeDirector = new Director();
+
+                        serviceChargeDirector.SetTransactionBuilder(serviceChargeBuilder);
+                        serviceChargeDirector.ConstructTransaction(accountNumber, 0, serviceFee, null);
+
+                        var serviceCharge = serviceChargeDirector.GetTransaction();
+                        Transactions.Add(serviceCharge);
+                        transactionList.Add(serviceCharge);
+
+                        Console.WriteLine("A service charge of {0} has been applied.", serviceFee);
+                        Console.WriteLine();
+                    }
+
+                    return transactionList;
                 } 
             }
-        }
-
-
-        public Transaction TransferIn(int accountNumber, int destinationAccountNumber, decimal amount, string comment)
-        {
-            Balance += amount;
-
-            var transferBuilder = new TransferBuilder();
-            var director = new Director();
-
-            director.SetTransactionBuilder(transferBuilder);
-            director.ConstructTransaction(accountNumber, destinationAccountNumber, amount, comment);
-
-            var transaction = director.GetTransaction();
-            Transactions.Add(transaction);
-
-            return transaction;
-        }
-
-
-        public Transaction ServiceCharge(int accountNumber, int destinationAccountNumber, decimal amount, string comment)
-        {
-            Balance += amount;
-
-            var serviceChargeBuilder = new ServiceChargeBuilder();
-            var director = new Director();
-
-            director.SetTransactionBuilder(serviceChargeBuilder);
-            director.ConstructTransaction(accountNumber, destinationAccountNumber, amount, comment);
-
-            var transaction = director.GetTransaction();
-            Transactions.Add(transaction);
-
-            return transaction;
         }
     }
 }

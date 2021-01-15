@@ -8,13 +8,11 @@ namespace Managers
     {
 
         private readonly string _connectionString;
-        public static Dictionary<int, Account> Accounts { get; set; }
 
 
         public AccountManager(string connectionString)
         {
             _connectionString = connectionString;
-            Accounts = new Dictionary<int, Account>();
         }
 
 
@@ -46,7 +44,7 @@ namespace Managers
                     Balance = (decimal)x["Balance"],
                     Transactions = transactionManager.GetTransactions((int)x["AccountNumber"])
                 };
-                Accounts.Add(account.AccountNumber, account);
+                Container.Accounts.Add(account.AccountNumber, account);
                 accountList.Add(account);
             }
 

@@ -13,7 +13,8 @@ namespace Services
         {
             // Check if any login info exists in the table
             var loginManager = new LoginManager(connectionString);
-            if (loginManager.Logins.Any())
+            loginManager.Instantiate();
+            if (Container.Logins.Any())
                 return;
 
             // Contact web service and read JSON file

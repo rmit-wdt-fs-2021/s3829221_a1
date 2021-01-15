@@ -66,11 +66,11 @@ Enter an option: ");
             Console.WriteLine();
 
             // Verify login ID / Correct login ID
-            if (_loginManager.Logins.ContainsKey(loginID))
+            if (Container.Logins.ContainsKey(loginID))
             {
-                var passwordHash = _loginManager.Logins[loginID].PasswordHash;
-                var customerID = _loginManager.Logins[loginID].CustomerID;
-                var customer = _customerManager.Customers[customerID];
+                var passwordHash = Container.Logins[loginID].PasswordHash;
+                var customerID = Container.Logins[loginID].CustomerID;
+                var customer = Container.Customers[customerID];
 
                 // Mask password input
                 Console.Write("Password: ");
@@ -189,7 +189,7 @@ Enter an option: ");
             {
                 Console.WriteLine(
 @"Account Infomation
-=============================
+========================
 Account Number: {0}
 Account Type:   {1}
 Balance:        {2:C}",
@@ -245,31 +245,17 @@ Enter an option: ");
             Console.Write("Specify the amount of deposit: ");
             var amount = InputUtilities.EnterPositiveNum();
 
-            // Create transaction object
+            // Update model
             var transaction = _account.Deposit(_account.AccountNumber, 0, amount, null);
 
-            // Insert transaction into database
+            // Update database
             _transactionManager.InsertTransaction(transaction);
-
-            // Update Account table
             _accountManager.UpdateAccount(_account.AccountNumber, amount);
-
-            Console.Clear();
-            Console.WriteLine("A deposit of {0:C} has been made to your account {1}", amount, _account.AccountNumber);
-            Console.WriteLine();
         }
 
 
         public void Withdraw()
         {
-            // Count the number of transactions where service charge applies
-            var result = from transaction in _account.Transactions
-                         where transaction.TransactionType == 'W' || transaction.TransactionType == 'T' && transaction.Amount < 0
-                         select transaction;
-            var count = result.Count();
-
-            var serviceFee = count < 4 ? 0 : (decimal)0.1;
-
             while (true)
             {
                 Console.Write("Specify the amount of withdrawal: ");
@@ -277,26 +263,16 @@ Enter an option: ");
 
                 try
                 {
-                    // Withdraw from account
+                    // Update model
                     var withdraw = _account.Withdraw(_account.AccountNumber, 0, amount, null);
 
-                    // Insert withdrawal into database
-                    _transactionManager.InsertTransaction(withdraw);
-
-                    Console.Clear();
-                    Console.WriteLine("A withdrawal of {0:C} has been made from your account {1}", amount, _account.AccountNumber);
-
-                    // Charge service fee if free transactions run out
-                    if (serviceFee != 0)
+                    // Update database
+                    foreach (var x in withdraw)
                     {
-                        var serviceCharge = _account.ServiceCharge(_account.AccountNumber, 0, serviceFee, null);
-                        _transactionManager.InsertTransaction(serviceCharge);
-
-                        Console.WriteLine("A service charge of {0:C} has been applied.", serviceFee);
+                        _transactionManager.InsertTransaction(x);
+                        _accountManager.UpdateAccount(x.AccountNumber, -x.Amount);
                     }
 
-                    _accountManager.UpdateAccount(_account.AccountNumber, -(amount + serviceFee));
-                    Console.WriteLine();
                     return;
                 }
                 catch (MinBalanceBreachException)
@@ -330,6 +306,13 @@ Enter an option: ");
                     Console.WriteLine();
                     continue;
                 }
+                else if (int.Parse(destinationAccount) == _account.AccountNumber)
+                {
+                    Console.Clear();
+                    Console.WriteLine("Transfer to the same account is not allowed.");
+                    Console.WriteLine();
+                    continue;
+                }
 
                 Console.Write("Specify the amount of transfer: ");
                 var amount = InputUtilities.EnterPositiveNum();
@@ -341,16 +324,31 @@ Enter an option: ");
 
                 try
                 {
-                    // Transfer out from account
-                    var transferOut = _account.TransferOut(_account.AccountNumber, int.Parse(destinationAccount), amount, comment);
+                    // Update model
+                    var transfer = _account.Transfer(_account.AccountNumber, int.Parse(destinationAccount), amount, comment);
+
+                    // Update database
+                    foreach (var x in transfer)
+                    {
+                        _transactionManager.InsertTransaction(x);
+
+                        // Increase balance for transfer-in 
+                        if (x.TransactionType == 'T' && x.DestinationAccountNumber == 0)
+                            _accountManager.UpdateAccount(x.AccountNumber, x.Amount);
+                        // Reduce balance for transfer-out or service charge
+                        else
+                            _accountManager.UpdateAccount(x.AccountNumber, -x.Amount);
+                    }
+
+                    return;
                 }
                 catch (ObjectNotFoundException)
                 {
-
+                    return;
                 }
                 catch (MinBalanceBreachException)
                 {
-
+                    return;
                 }
             }
         }

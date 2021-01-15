@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Models;
 using Services;
 using Microsoft.Extensions.Configuration;
 
@@ -12,6 +12,8 @@ namespace Client
             // Import connection string from JSON file
             var configuration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
             var connectionString = configuration["ConnectionString"];
+
+            var container = new Container();
 
             // Read data from JSON file and save on database
             CustomersWebService.ReadAndSaveCustomer(connectionString);

@@ -7,7 +7,7 @@ namespace ClassLibrary
 
         public ObjectNotFoundException(string obj)
         {
-            Console.WriteLine("This {0} cannot be found, please enter again.", obj);
+            Console.WriteLine("This {0} cannot be found.", obj);
             Console.WriteLine();
         }
     }

@@ -10,7 +10,7 @@ namespace Client
 {
     class Menu
     {
-
+        private readonly string _connectionString;
         private readonly CustomerManager _customerManager;
         private readonly AccountManager _accountManager;
         private readonly TransactionManager _transactionManager;
@@ -21,6 +21,7 @@ namespace Client
 
         public Menu(string connectionString)
         {
+            _connectionString = connectionString;
             _customerManager = new CustomerManager(connectionString);
             _accountManager = new AccountManager(connectionString);
             _transactionManager = new TransactionManager(connectionString);
@@ -32,8 +33,8 @@ namespace Client
         {
             while (true)
             {
-                Console.Write(
-@"Welcome to MCBA Internet Bank
+                Console.Write(@"
+Welcome to MCBA Internet Bank
 =============================
 1. Login
 2. Quit
@@ -88,9 +89,8 @@ Enter an option: ");
                     while (true)
                     {
                         Console.WriteLine($"Hello, Ms/Mr. {_customer.Name}!");
-                        Console.WriteLine();
-                        Console.Write(
-    @"  Customer Page
+                        Console.Write(@"
+  Customer Page
 =================
 1. Select account
 2. Log out
@@ -187,8 +187,8 @@ Enter an option: ");
         {
             while (true)
             {
-                Console.WriteLine(
-@"Account Infomation
+                Console.WriteLine(@"
+   Account Infomation
 ========================
 Account Number: {0}
 Account Type:   {1}
@@ -197,8 +197,8 @@ _account.AccountNumber, _account.AccountType == 'S' ? "Saving" : "Checking", _ac
 
                 Console.WriteLine();
 
-                Console.Write(
-@"         Services
+                Console.Write(@"
+         Services
 ==========================
 1. Deposit
 2. Withdrawal
@@ -356,7 +356,46 @@ Enter an option: ");
 
         public void DisplayStatement()
         {
+            var statement = _account.Transactions;
+            statement.Sort();
 
+            var pagination = new Pagination<Transaction>(_account.Transactions, 4);
+
+            while (true)
+            {
+                Console.WriteLine("{0, 12} {1, 12} {2, 12} {3, 12} {4, 12:C} {5, 12} {6, 25}",
+                        "ID", "Type", "Account", "Dest. Acc.", "Amount", "Comment", "Local Time");
+                Console.WriteLine(new String('-', 104));
+
+                pagination.Print();
+
+                Console.WriteLine();
+                Console.Write(@"
+1. Previous page
+2. Next page
+3. Close statement
+
+Enter an option: ");
+
+                var option = InputUtilities.EnterOption(1, 3);
+
+                switch (option)
+                {
+                    case 1:
+                        Console.Clear();
+                        pagination.Previous();
+                        break;
+                    case 2:
+                        Console.Clear();
+                        pagination.Next();
+                        break;
+                    case 3:
+                        Console.Clear();
+                        return;
+                    default:
+                        throw new InvalidOperationException();
+                }
+            }
         }
     }
 }

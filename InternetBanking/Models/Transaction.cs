@@ -24,13 +24,13 @@ namespace Models
 
         public override string ToString()
         {
-            return String.Format("{0, 12} {1, 12} {2, 12} {3, 12} {4, 12:C} {5, 12} {6, 12}",
+            return String.Format("{0, 12} {1, 12} {2, 12} {3, 12} {4, 12:C} {5, 12} {6, 25}",
                 TransactionID,
                 TransactionType,
                 AccountNumber,
-                DestinationAccountNumber != 0 ? DestinationAccountNumber : "N/A",
+                DestinationAccountNumber != 0 ? DestinationAccountNumber : "null",
                 Amount,
-                Comment ?? "N/A",
+                Comment ?? "null",
                 TransactionTimeUtc.ToLocalTime());
         }
     }

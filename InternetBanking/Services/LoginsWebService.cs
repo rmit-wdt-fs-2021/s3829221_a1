@@ -4,7 +4,8 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Models;
 using Managers;
-using System.Threading;
+using Microsoft.Data.SqlClient;
+using System;
 using System.Threading.Tasks;
 
 namespace Services
@@ -15,7 +16,19 @@ namespace Services
         {
             // Check if any login info exists in the table
             var loginManager = new LoginManager(connectionString);
-            loginManager.Instantiate();
+
+            // Handle database connection exception
+            try
+            {
+                loginManager.Instantiate();
+            }
+            catch (SqlException)
+            {
+                Console.WriteLine("We are sorry to inform you that the database in under maintenance at the moment.");
+                Console.WriteLine("Please come back later.");
+                System.Environment.Exit(1);
+            }
+
             if (Container.Logins.Any())
                 return;
 

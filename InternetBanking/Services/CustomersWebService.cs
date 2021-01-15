@@ -4,8 +4,9 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Models;
 using Managers;
-using System.Threading;
+using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
+using System;
 
 namespace Services
 {
@@ -17,7 +18,19 @@ namespace Services
 
             // Check if any customer exists in the table
             var customerManager = new CustomerManager(connectionString);
-            customerManager.Instantiate();
+
+            // Handle database connection exception
+            try
+            {
+                customerManager.Instantiate();
+            }
+            catch (SqlException)
+            {
+                Console.WriteLine("We are sorry to inform you that the database in under maintenance at the moment.");
+                Console.WriteLine("Please come back later.");
+                System.Environment.Exit(1);
+            }
+
             if (Container.Customers.Any())
                 return;
 

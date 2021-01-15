@@ -18,7 +18,7 @@ namespace Managers
         public void Instantiate()
         { 
             // Create connection
-            var connection = _connectionString.CreateConnection();
+            using var connection = _connectionString.CreateConnection();
 
             // Create command
             var command = connection.CreateCommand();

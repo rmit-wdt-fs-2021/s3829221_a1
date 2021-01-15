@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using Models;
+﻿using Models;
 using ClassLibrary;
 using System;
-using Microsoft.Data.SqlClient;
-using System.Data;
 
 namespace Managers
 {
@@ -21,7 +18,7 @@ namespace Managers
         public void Instantiate()
         { 
             // Create connection
-            var connection = _connectionString.CreateConnection();
+            using var connection = _connectionString.CreateConnection();
 
             // Create command
             var command = connection.CreateCommand();

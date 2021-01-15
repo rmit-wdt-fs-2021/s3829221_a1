@@ -16,7 +16,7 @@ namespace Client
             var container = new Container();
 
             // Read data from JSON file and save on database
-            CustomersWebService.ReadAndSaveCustomer(connectionString);
+            AsyncCustomerWebService.ReadAndSaveCustomer(connectionString);
             LoginsWebService.ReadAndSaveLogin(connectionString);
 
             new Menu(connectionString).Run();

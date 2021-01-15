@@ -4,12 +4,14 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Models;
 using Managers;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Services
 {
     public static class LoginsWebService
     {
-        public static void ReadAndSaveLogin(string connectionString)
+        public static async Task ReadAndSaveLogin(string connectionString)
         {
             // Check if any login info exists in the table
             var loginManager = new LoginManager(connectionString);
@@ -19,7 +21,8 @@ namespace Services
 
             // Contact web service and read JSON file
             using var client = new HttpClient();
-            var json = client.GetStringAsync("https://coreteaching01.csit.rmit.edu.au/~e87149/wdt/services/logins/").Result;
+            var getJson = client.GetStringAsync("https://coreteaching01.csit.rmit.edu.au/~e87149/wdt/services/logins/");
+            var json = await getJson;
 
             // Deserialise JSON file into objects
             var logins = JsonConvert.DeserializeObject<List<Login>>(json);

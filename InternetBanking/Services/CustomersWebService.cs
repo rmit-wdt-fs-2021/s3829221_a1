@@ -4,13 +4,15 @@ using System.Net.Http;
 using Newtonsoft.Json;
 using Models;
 using Managers;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Services
 {
     public static class CustomersWebService
     {
 
-        public static void ReadAndSaveCustomer(string connectionString)
+        public static async Task ReadAndSaveCustomer(string connectionString)
         {
 
             // Check if any customer exists in the table
@@ -21,7 +23,8 @@ namespace Services
 
             // Contact web service and read JSON file
             using var client = new HttpClient();
-            var json = client.GetStringAsync("https://coreteaching01.csit.rmit.edu.au/~e87149/wdt/services/customers/").Result;
+            var getJson = client.GetStringAsync("https://coreteaching01.csit.rmit.edu.au/~e87149/wdt/services/customers/");
+            var json = await getJson;
 
             // Deserialise JSON file into objects
             var customers = JsonConvert.DeserializeObject<List<Customer>>(json, new JsonSerializerSettings
@@ -53,7 +56,6 @@ namespace Services
                     }
                 }
             }
-
         }
     }
 }
